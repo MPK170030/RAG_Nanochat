@@ -1,0 +1,16 @@
+{"query": "how does nanochat implement rotary embeddings", "expected_file": "nanochat/gpt.py", "expected_name": "apply_rotary_emb", "notes": "core attention mechanism, RoPE implementation"}
+{"query": "what does speedrun.sh do", "expected_file": "runs/speedrun.sh", "expected_name": "speedrun", "notes": "file-level query, should hit shell_script chunk"}
+{"query": "what is gpt.py's role in the codebase", "expected_file": "nanochat/gpt.py", "expected_name": "gpt", "notes": "module_summary chunk, tests file-level query routing"}
+{"query": "how does group query attention work in nanochat", "expected_file": "nanochat/gpt.py", "expected_name": "GPTConfig", "notes": "n_kv_head field in GPTConfig dataclass"}
+{"query": "how are model checkpoints saved", "expected_file": "nanochat/checkpoint_manager.py", "expected_name": "save_checkpoint", "notes": "direct function name lookup"}
+{"query": "how does nanochat load a model from a checkpoint", "expected_file": "nanochat/checkpoint_manager.py", "expected_name": "load_model", "notes": "load_model is the direct answer to loading from checkpoint"}
+{"query": "what function orchestrates checkpoint loading and GPT model construction", "expected_file": "nanochat/checkpoint_manager.py", "expected_name": "build_model", "notes": "build_model orchestrates load_checkpoint + GPT construction"}
+{"query": "what optimizer does nanochat use for training", "expected_file": "nanochat/optim.py", "expected_name": "MuonAdamW", "notes": "custom optimizer, should surface the class or module_summary"}
+{"query": "how is the compute dtype selected at startup", "expected_file": "nanochat/common.py", "expected_name": "_detect_compute_dtype", "notes": "auto-detection logic for bf16 vs fp32 based on CUDA capability"}
+{"query": "how does the training dataloader stream data", "expected_file": "nanochat/dataloader.py", "expected_name": "dataloader", "notes": "module_summary or top-level function/class in dataloader.py"}
+{"query": "how does nanochat tokenize text", "expected_file": "nanochat/tokenizer.py", "expected_name": "tokenizer", "notes": "module_summary or Tokenizer class"}
+{"query": "what GPT model architecture configuration options are available", "expected_file": "nanochat/gpt.py", "expected_name": "GPTConfig", "notes": "dataclass with sequence_len, vocab_size, n_layer, n_head, n_kv_head, n_embd, window_pattern"}
+{"query": "how does the inference engine handle token generation", "expected_file": "nanochat/engine.py", "expected_name": "engine", "notes": "module_summary for engine.py"}
+{"query": "what datasets does nanochat support for training", "expected_file": "nanochat/dataset.py", "expected_name": "dataset", "notes": "module_summary or Dataset class"}
+{"query": "how does flash attention integrate with nanochat", "expected_file": "nanochat/flash_attention.py", "expected_name": "flash_attention", "notes": "module_summary, FA3 vs SDPA fallback"}
+{"query": "how does chat supervised fine-tuning work", "expected_file": "scripts/chat_sft.py", "expected_name": "chat_sft", "notes": "SFT training script, module_summary or main function"}
