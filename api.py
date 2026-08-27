@@ -2,20 +2,23 @@
 FastAPI backend for the nanochat RAG chatbot.
 
 Endpoints:
-    GET  /health       — liveness check
-    POST /ask          — retrieve + generate an answer with source citations
+    GET  /health        — liveness check
+    POST /ask           — retrieve + generate an answer with source citations
+    POST /ask/stream    — same, but streams tokens as SSE
 
 Run with:
     uvicorn api:app --reload --port 8000
 """
+import json
 import os
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from answer import answer as rag_answer
+from answer import answer as rag_answer, answer_stream
 
 load_dotenv()
 
@@ -68,3 +71,22 @@ def ask(request: AskRequest):
 
     response_text, sources = rag_answer(request.query, k=request.k)
     return AskResponse(answer=response_text, sources=[Source(**s) for s in sources])
+
+
+@app.post("/ask/stream")
+def ask_stream(request: AskRequest):
+    if not os.environ.get("GROQ_API_KEY"):
+        raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured")
+
+    def sse_events():
+        for event_type, data in answer_stream(request.query, k=request.k):
+            if event_type == "token":
+                yield f"data: {json.dumps({'token': data})}\n\n"
+            else:
+                yield f"data: {json.dumps({'sources': data, 'done': True})}\n\n"
+
+    return StreamingResponse(
+        sse_events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
