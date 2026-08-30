@@ -40,7 +40,7 @@ export default function App() {
     setIsStreaming(true)
 
     try {
-      const res = await fetch('/ask/stream', {
+      const res = await fetch('https://coderagapi.manavpkothari.dev/ask/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, k }),

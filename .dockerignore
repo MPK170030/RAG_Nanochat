@@ -1,0 +1,9 @@
+myenv/
+nanochat/
+frontend/
+__pycache__/
+*.pyc
+.env
+.git/
+*.md
+eval_questions.jsonl

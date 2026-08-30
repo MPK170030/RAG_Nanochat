@@ -30,7 +30,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://coderag.manavpkothari.dev",
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
