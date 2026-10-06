@@ -24,16 +24,22 @@ from retrieve import retrieve
 load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-MODEL = "google/gemma-4-31b-it:free"  # hardcoded fallback; override with OPENROUTER_MODEL env var
+MODEL = "qwen/qwen3-30b-a3b"  # hardcoded fallback; override with OPENROUTER_MODEL env var
 FALLBACK_MODELS = [
-    "google/gemma-4-31b-it:free",
+    "qwen/qwen3-30b-a3b",
+    "meta-llama/llama-3.3-70b-instruct",
+    "deepseek/deepseek-v4-pro-0813",
+    "anthropic/claude-sonnet-5.5",
 ]
 
 
 def _model_chain() -> list[str]:
-    """Primary model (env override or default) followed by the hardcoded fallback list."""
+    """Primary model (env override or default) followed by the hardcoded fallback list.
+    Capped at 3 — OpenRouter's models array limit.
+    """
     primary = os.environ.get("OPENROUTER_MODEL", MODEL)
-    return [primary] + [m for m in FALLBACK_MODELS if m != primary]
+    chain = [primary] + [m for m in FALLBACK_MODELS if m != primary]
+    return chain[:3]
 SYSTEM_PROMPT = """\
 You are a code assistant that answers questions about the nanochat codebase.
 You are given a set of retrieved code chunks as context. Use them to answer \

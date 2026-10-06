@@ -4,12 +4,22 @@ import SourceCard from './SourceCard'
 import type { Message } from '../App'
 
 function AssistantContent({ content, streaming }: { content: string; streaming?: boolean }) {
+  if (streaming && content.length === 0) {
+    return (
+      <div className="flex gap-2 items-center py-1">
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+      </div>
+    )
+  }
+
   const cursor = streaming && content.length > 0
     ? <span className="inline-block w-0.5 h-4 bg-gray-400 ml-0.5 align-middle animate-pulse" />
     : null
 
   return (
-    <div className="prose prose-invert prose-sm max-w-none
+    <div className="prose prose-invert prose-base max-w-none
       prose-p:my-2 prose-p:leading-relaxed
       prose-code:bg-gray-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
       prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700
@@ -47,7 +57,7 @@ export default function MessageBubble({ message }: { message: Message }) {
         }
       </div>
 
-      {message.sources && message.sources.length > 0 && (
+      {message.content && message.sources && message.sources.length > 0 && (
         <div className="w-full space-y-2 max-w-[650px]">
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wide px-1">Sources</p>
           {message.sources.map((source, i) => (

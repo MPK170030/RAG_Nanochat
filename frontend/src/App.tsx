@@ -40,7 +40,7 @@ export default function App() {
     setIsStreaming(true)
 
     try {
-      const res = await fetch('https://coderagapi.manavpkothari.dev/ask/stream', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/ask/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, k }),
@@ -100,9 +100,6 @@ export default function App() {
     setError(null)
   }
 
-  const lastMsg = messages[messages.length - 1]
-  const showBounce = isStreaming && (!lastMsg || lastMsg.content === '')
-
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       <Sidebar k={k} onKChange={setK} onClear={handleClear} messageCount={messages.length} />
@@ -124,14 +121,6 @@ export default function App() {
           {messages.map((msg, i) => (
             <MessageBubble key={i} message={msg} />
           ))}
-
-          {showBounce && (
-            <div className="flex gap-2 items-center text-gray-500 w-[90%] mx-auto">
-              <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:0ms]" />
-              <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:150ms]" />
-              <span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:300ms]" />
-            </div>
-          )}
 
           {error && (
             <div className="px-4 py-3 rounded-lg bg-red-950 border border-red-800 text-red-300 text-sm w-[90%] mx-auto">
