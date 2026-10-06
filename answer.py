@@ -1,5 +1,5 @@
 """
-Generation layer: retrieves relevant chunks and calls Groq to produce an answer.
+Generation layer: retrieves relevant chunks and calls OpenRouter to produce an answer.
 
     answer(query) -> (response_text, sources)
     answer_stream(query) -> generator of ("token", str) | ("sources", list)
@@ -17,13 +17,23 @@ import sys
 from collections.abc import Generator
 
 from dotenv import load_dotenv
-from groq import Groq
+from openai import OpenAI
 
 from retrieve import retrieve
 
 load_dotenv()
 
-MODEL = "qwen/qwen3.6-27b"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+MODEL = "google/gemma-4-31b-it:free"  # hardcoded fallback; override with OPENROUTER_MODEL env var
+FALLBACK_MODELS = [
+    "google/gemma-4-31b-it:free",
+]
+
+
+def _model_chain() -> list[str]:
+    """Primary model (env override or default) followed by the hardcoded fallback list."""
+    primary = os.environ.get("OPENROUTER_MODEL", MODEL)
+    return [primary] + [m for m in FALLBACK_MODELS if m != primary]
 SYSTEM_PROMPT = """\
 You are a code assistant that answers questions about the nanochat codebase.
 You are given a set of retrieved code chunks as context. Use them to answer \
@@ -90,9 +100,11 @@ def answer_stream(query: str, k: int = 5) -> Generator[tuple[str, object], None,
 
     user_message = f"Context:\n\n{context}\n\nQuestion: {query}"
 
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    chain = _model_chain()
+    client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=os.environ["OPENROUTER_API_KEY"])
     stream = client.chat.completions.create(
-        model=MODEL,
+        model=chain[0],
+        extra_body={"models": chain, "route": "fallback"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_message},
@@ -122,9 +134,11 @@ def answer(query: str, k: int = 5) -> tuple[str, list[dict]]:
 
     user_message = f"Context:\n\n{context}\n\nQuestion: {query}"
 
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    chain = _model_chain()
+    client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=os.environ["OPENROUTER_API_KEY"])
     response = client.chat.completions.create(
-        model=MODEL,
+        model=chain[0],
+        extra_body={"models": chain, "route": "fallback"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_message},

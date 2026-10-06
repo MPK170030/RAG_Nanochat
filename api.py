@@ -70,8 +70,8 @@ def health():
 
 @app.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest):
-    if not os.environ.get("GROQ_API_KEY"):
-        raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured")
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        raise HTTPException(status_code=503, detail="OPENROUTER_API_KEY not configured")
 
     response_text, sources = rag_answer(request.query, k=request.k)
     return AskResponse(answer=response_text, sources=[Source(**s) for s in sources])
@@ -79,8 +79,8 @@ def ask(request: AskRequest):
 
 @app.post("/ask/stream")
 def ask_stream(request: AskRequest):
-    if not os.environ.get("GROQ_API_KEY"):
-        raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured")
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        raise HTTPException(status_code=503, detail="OPENROUTER_API_KEY not configured")
 
     def sse_events():
         for event_type, data in answer_stream(request.query, k=request.k):
