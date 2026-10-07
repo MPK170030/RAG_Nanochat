@@ -9,7 +9,7 @@ Your browser → Vercel (React frontend, yourdomain.com)
                   └── POST https://api.yourdomain.com/ask
                             └── EC2 t3.micro (your server running Docker)
                                   └── FastAPI + your RAG pipeline
-                                        └── Groq API (external, for the LLM)
+                                        └── OpenRouter API (external, for the LLM)
 ```
 
 **Monthly cost: ~$8.50** (EC2 t3.micro + Elastic IP, us-east-1)
@@ -114,17 +114,21 @@ You should see your account ID printed. If you get an error, double-check your c
    - `AmazonSSMReadOnlyAccess` — lets the server read your secret API key
 4. Name: `nanochat-rag-role` → Create role
 
-### Step 2 — Store your Groq API key securely
+### Step 2 — Store your API keys securely
 
 **What this is:** Instead of putting your API key in a file on the server (where it could leak), you'll store it in AWS Parameter Store — an encrypted secrets vault. The server will fetch it at startup using the role you just created.
 
 1. Search for **"Systems Manager"** → open it
 2. In the left sidebar → **Parameter Store → Create parameter**
-3. Settings:
-   - **Name:** `/nanochat-rag/groq-api-key`
+3. Create the required parameter:
+   - **Name:** `/nanochat-rag/openrouter-api-key`
    - **Type:** `SecureString` (this encrypts it at rest)
-   - **Value:** your actual Groq API key (starts with `gsk_...`)
-4. Create parameter
+   - **Value:** your OpenRouter API key (starts with `sk-or-...`)
+4. Optionally create a second parameter to override the primary model without rebuilding:
+   - **Name:** `/nanochat-rag/openrouter-model`
+   - **Type:** `String`
+   - **Value:** e.g. `qwen/qwen3-30b-a3b` (leave blank to use the hardcoded default)
+5. Create parameter(s)
 
 ### Step 3 — Create the EC2 Instance
 
@@ -310,12 +314,19 @@ cat > /home/ec2-user/start.sh << 'EOF'
 set -e
 
 # Fetch the API key from Parameter Store (uses the IAM role — no hardcoded credentials)
-GROQ_API_KEY=$(aws ssm get-parameter \
-  --name /nanochat-rag/groq-api-key \
+OPENROUTER_API_KEY=$(aws ssm get-parameter \
+  --name /nanochat-rag/openrouter-api-key \
   --with-decryption \
   --query Parameter.Value \
   --output text \
   --region us-east-1)
+
+# Optionally fetch model override (falls back to hardcoded default if parameter doesn't exist)
+OPENROUTER_MODEL=$(aws ssm get-parameter \
+  --name /nanochat-rag/openrouter-model \
+  --query Parameter.Value \
+  --output text \
+  --region us-east-1 2>/dev/null || echo "")
 
 # Stop and remove the old container if it's running
 docker stop nanochat-rag 2>/dev/null || true
@@ -328,7 +339,8 @@ docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
 docker run -d \
   --name nanochat-rag \
   --restart unless-stopped \
-  -e GROQ_API_KEY="$GROQ_API_KEY" \
+  -e OPENROUTER_API_KEY="$OPENROUTER_API_KEY" \
+  -e OPENROUTER_MODEL="$OPENROUTER_MODEL" \
   -p 8000:8000 \
   123456789012.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
 EOF
@@ -438,11 +450,11 @@ Certbot sets up auto-renewal via a cron job — your certificate renews every 90
 
 ### Step 15 — Deploy the Frontend to Vercel
 
-On your local machine, update the API URL in `frontend/src/App.tsx`:
+The API URL is configured via the `VITE_API_URL` environment variable (set at Vercel build time). In your Vercel project settings → **Environment Variables**, add:
 
-```ts
-const API_URL = 'https://api.yourdomain.com/ask'
-```
+| Name | Value |
+|------|-------|
+| `VITE_API_URL` | `https://api.yourdomain.com` |
 
 Then push to GitHub — Vercel will auto-deploy if you've connected the repo.
 
