@@ -177,6 +177,8 @@ aws ec2 describe-instances \
   --filters "Name=tag:Name,Values=nanochat-rag" \
   --query "Reservations[0].Instances[0].InstanceId" \
   --output text
+or
+aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,Tags[?Key=='Name'].Value|[0],State.Name]" --output table
 
 # Open a shell (replace i-xxxx with the ID above)
 aws ssm start-session --target i-xxxx --region us-east-1
@@ -473,18 +475,42 @@ Test the full flow end-to-end: open the Vercel URL in your browser, ask a questi
 
 ## Updating After Code Changes
 
-When you make changes to the backend:
+### Backend changes
+
+**On your local machine:**
 
 ```bash
-# On your local machine — rebuild and push
+# Rebuild and push to ECR
 docker build -t nanochat-rag .
-docker tag nanochat-rag:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
+docker tag nanochat-rag:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
 
-# On the server — pull the new image and restart
+# Re-authenticate if token expired (tokens last ~12 hours)
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+
+docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/nanochat-rag:latest
+```
+
+**On the server — open an SSM session:**
+
+```bash
 aws ssm start-session --target <instance-id> --region us-east-1
-# then inside the session:
-./start.sh
+```
+
+SSM sessions start as `ssm-user`. To switch to `ec2-user`:
+```bash
+sudo su - ec2-user
+```
+
+Re-authenticate Docker to ECR and run the start script in one chained command (prevents token expiry between steps):
+
+```bash
+sudo aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com && sudo /home/ec2-user/start.sh
+```
+
+Verify it's running:
+```bash
+curl http://localhost:8000/health
+```
 ```
 
 When you make changes to the frontend, just push to GitHub — Vercel redeploys automatically.

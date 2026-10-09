@@ -29,9 +29,7 @@ export default function Sidebar({ k, onKChange, onClear, messageCount }: Props) 
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-300">Model</p>
-        <p className="text-sm font-mono text-gray-400">qwen/qwen3.6-27b</p>
-        <p className="text-sm font-medium text-gray-300 mt-2">Embeddings</p>
+        <p className="text-sm font-medium text-gray-300">Embeddings</p>
         <p className="text-sm font-mono text-gray-400">bge-small-en-v1.5</p>
         <p className="text-sm font-medium text-gray-300 mt-2">Vector store</p>
         <p className="text-sm font-mono text-gray-400">Chroma (local)</p>

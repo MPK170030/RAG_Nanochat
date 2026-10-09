@@ -59,6 +59,7 @@ class Source(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
+    model_used: str
 
 
 # --- Endpoints ---
@@ -73,8 +74,8 @@ def ask(request: AskRequest):
     if not os.environ.get("OPENROUTER_API_KEY"):
         raise HTTPException(status_code=503, detail="OPENROUTER_API_KEY not configured")
 
-    response_text, sources = rag_answer(request.query, k=request.k)
-    return AskResponse(answer=response_text, sources=[Source(**s) for s in sources])
+    response_text, sources, model_used = rag_answer(request.query, k=request.k)
+    return AskResponse(answer=response_text, sources=[Source(**s) for s in sources], model_used=model_used)
 
 
 @app.post("/ask/stream")
@@ -87,7 +88,7 @@ def ask_stream(request: AskRequest):
             if event_type == "token":
                 yield f"data: {json.dumps({'token': data})}\n\n"
             else:
-                yield f"data: {json.dumps({'sources': data, 'done': True})}\n\n"
+                yield f"data: {json.dumps({'sources': data['sources'], 'model': data['model'], 'done': True})}\n\n"
 
     return StreamingResponse(
         sse_events(),

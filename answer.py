@@ -37,7 +37,7 @@ def _model_chain() -> list[str]:
     """Primary model (env override or default) followed by the hardcoded fallback list.
     Capped at 3 — OpenRouter's models array limit.
     """
-    primary = os.environ.get("OPENROUTER_MODEL", MODEL)
+    primary = os.environ.get("OPENROUTER_MODEL") or MODEL
     chain = [primary] + [m for m in FALLBACK_MODELS if m != primary]
     return chain[:3]
 SYSTEM_PROMPT = """\
@@ -120,7 +120,10 @@ def answer_stream(query: str, k: int = 5) -> Generator[tuple[str, object], None,
     )
 
     stripper = _ThinkStripper()
+    model_used = chain[0]
     for chunk in stream:
+        if chunk.model:
+            model_used = chunk.model
         token = chunk.choices[0].delta.content
         if token:
             visible = stripper.feed(token)
@@ -131,10 +134,10 @@ def answer_stream(query: str, k: int = 5) -> Generator[tuple[str, object], None,
     if tail:
         yield "token", tail
 
-    yield "sources", sources
+    yield "sources", {"sources": sources, "model": model_used}
 
 
-def answer(query: str, k: int = 5) -> tuple[str, list[dict]]:
+def answer(query: str, k: int = 5) -> tuple[str, list[dict], str]:
     chunks = retrieve(query, k=k)
     context = _format_context(chunks)
 
@@ -157,7 +160,7 @@ def answer(query: str, k: int = 5) -> tuple[str, list[dict]]:
         {k: v for k, v in c.items() if k != "content"}
         for c in chunks
     ]
-    return answer_text, sources
+    return answer_text, sources, response.model
 
 
 if __name__ == "__main__":

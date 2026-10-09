@@ -16,6 +16,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   sources?: Source[]
+  model?: string
   streaming?: boolean
 }
 
@@ -67,7 +68,7 @@ export default function App() {
           if (!part.startsWith('data: ')) continue
           const payload = JSON.parse(part.slice(6)) as
             | { token: string }
-            | { done: true; sources: Source[] }
+            | { done: true; sources: Source[]; model: string }
 
           if ('token' in payload) {
             setMessages(prev => {
@@ -81,6 +82,7 @@ export default function App() {
               const msgs = [...prev]
               const last = { ...msgs[msgs.length - 1] }
               last.sources = payload.sources
+              last.model = payload.model
               last.streaming = false
               return [...msgs.slice(0, -1), last]
             })

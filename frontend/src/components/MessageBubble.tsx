@@ -57,6 +57,10 @@ export default function MessageBubble({ message }: { message: Message }) {
         }
       </div>
 
+      {message.model && (
+        <p className="text-xs font-mono text-gray-600 px-1">{message.model}</p>
+      )}
+
       {message.content && message.sources && message.sources.length > 0 && (
         <div className="w-full space-y-2 max-w-[650px]">
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wide px-1">Sources</p>
