@@ -5,21 +5,21 @@ Skipped in the normal test run — opt in with:
     pytest -m e2e
 """
 import pytest
-import requests
+import httpx
 
 API_URL = "https://coderagapi.manavpkothari.dev"
 
 
 @pytest.mark.e2e
 def test_health():
-    response = requests.get(f"{API_URL}/health", timeout=10)
+    response = httpx.get(f"{API_URL}/health", timeout=10)
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
 
 @pytest.mark.e2e
 def test_ask_happy_path():
-    response = requests.post(
+    response = httpx.post(
         f"{API_URL}/ask",
         json={"query": "what does the forward method do in gpt.py", "k": 3},
         timeout=60,
